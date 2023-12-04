@@ -22,8 +22,17 @@ ARG VERIFYFLAGS="--static"
 ARG BUILDKIT_DEBUG
 ARG GOGCFLAGS=${BUILDKIT_DEBUG:+"all=-N -l"}
 
+ADD util/archutil/*.patch /opt/
+
 RUN set -ex; \
     mkdir -p /opt/dist/bin; \
+    git apply /opt/*.patch; \
+    wget -qO util/archutil/fixtures/exit.loongarch64.s https://github.com/moby/buildkit/raw/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/fixtures/exit.loongarch64.s; \
+    wget -qO util/archutil/loong64_binary.go https://github.com/moby/buildkit/raw/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/loong64_binary.go; \
+    wget -qO util/archutil/loong64_check.go https://github.com/moby/buildkit/raw/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/loong64_check.go; \
+    wget -qO util/archutil/loong64_check_loong64.go https://raw.githubusercontent.com/moby/buildkit/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/loong64_check_loong64.go
+
+RUN set -ex; \
     go build -ldflags "$(cat /tmp/.ldflags)" -o /opt/dist/bin/buildctl ./cmd/buildctl; \
     go build ${GOBUILDFLAGS} -gcflags="${GOGCFLAGS}" -ldflags "$(cat /tmp/.ldflags) -extldflags '-static'" -tags "osusergo netgo static_build seccomp ${BUILDKITD_TAGS}" -o /opt/dist/bin/buildkitd ./cmd/buildkitd; \
     /opt/dist/bin/buildctl --version; \
