@@ -1,6 +1,6 @@
 FROM golang:1.21-buster as builder
 
-ARG BUILDKIT_VERSION=v0.12.4
+ARG BUILDKIT_VERSION=v0.13.0
 
 ENV BUILDKIT_VERSION=${BUILDKIT_VERSION}
 ENV GOPROXY=https://goproxy.io
@@ -22,15 +22,8 @@ ARG VERIFYFLAGS="--static"
 ARG BUILDKIT_DEBUG
 ARG GOGCFLAGS=${BUILDKIT_DEBUG:+"all=-N -l"}
 
-ADD util/archutil/*.patch /opt/
-
 RUN set -ex; \
-    mkdir -p /opt/dist/bin; \
-    git apply /opt/*.patch; \
-    wget -qO util/archutil/fixtures/exit.loongarch64.s https://github.com/moby/buildkit/raw/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/fixtures/exit.loongarch64.s; \
-    wget -qO util/archutil/loong64_binary.go https://github.com/moby/buildkit/raw/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/loong64_binary.go; \
-    wget -qO util/archutil/loong64_check.go https://github.com/moby/buildkit/raw/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/loong64_check.go; \
-    wget -qO util/archutil/loong64_check_loong64.go https://raw.githubusercontent.com/moby/buildkit/592b4a6e7293faee5245835a61c1f22dbb08082b/util/archutil/loong64_check_loong64.go
+    mkdir -p /opt/dist/bin
 
 RUN set -ex; \
     go build -ldflags "$(cat /tmp/.ldflags)" -o /opt/dist/bin/buildctl ./cmd/buildctl; \
